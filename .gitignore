@@ -60,3 +60,6 @@ typings/
 #configuration file
 config/
 
+#vs code settings file
+.vscode
+

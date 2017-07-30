@@ -1,2 +1,2 @@
 # node-auth
-Token-based authentication example with NodeJS
+Token-based authentication example using NodeJS
