@@ -1,18 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const user = require('../models/user.js')
-const config = require('../config/config.js');
+const user = require('../models/user.js');
 
 var router = express.Router();
 
-router.get('/', (req,res) => {
-	user.find({},(err,users)=>{
-		res.send(users);
-	});
-});
-
-router.route('/auth/login')
+router.route('/login')
 .post((req,res) => {
 	user.findOne({'email': req.body.email},(err,result)=>{
 		if(err) throw err;
@@ -22,7 +15,7 @@ router.route('/auth/login')
 			var loadUser = result;
 			bcrypt.compare(req.body.password,result.password_hash,(err,result)=>{
 				if(result){
-					var token = jwt.sign(loadUser,config.secret,{expiresIn: 60});
+					var token = jwt.sign(loadUser,process.env.JWT_SECRET,{expiresIn: 60});
 					res.send({
 						message:'Authentication successful!',
 						token: token
@@ -35,7 +28,7 @@ router.route('/auth/login')
 	});
 });
 
-router.route('/auth/register')
+router.route('/register')
 .post((req,res) => {
 	user.findOne({'email': req.body.email},(err,result)=>{
 		if(err) throw err;
@@ -59,23 +52,20 @@ router.route('/auth/register')
 	});
 });
 
-router.route('/app')
-.all((req,res,next)=>{
+router.route('/verify')
+.post((req,res)=>{
 	var token = req.body.token||req.headers.token||req.query.token;
 	if(token){
-		jwt.verify(token,config.secret,(err,user)=>{
-			if(err) res.send(err);
+		jwt.verify(token,process.env.JWT_SECRET,(err,user)=>{
+			if(err) 
+				res.status(400).send(err);
 			else {
-				req.user = user._doc;
-				next();
+				res.status(200).send('Token verified!');
 			}
 		});
 	}else{
-		res.send('No token provided');
+		res.status(400).send('Invalid token');
 	}
-})
-.get((req,res,next)=>{
-	res.status(200).send('Hello ' + req.user.fullName);
 });
 
 module.exports = router;
